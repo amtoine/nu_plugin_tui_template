@@ -36,13 +36,11 @@ impl SimplePluginCommand for Template {
     }
 
     fn examples(&self) -> Vec<nu_protocol::Example> {
-        vec![
-            Example {
-                example: "nu_plugin_tui_template",
-                description: "run the TUI template plugin",
-                result: None,
-            },
-        ]
+        vec![Example {
+            example: "nu_plugin_tui_template",
+            description: "run the TUI template plugin",
+            result: None,
+        }]
     }
 
     fn run(
@@ -62,7 +60,13 @@ impl SimplePluginCommand for Template {
         }
 
         let foreground = engine.enter_foreground()?;
-        nu_plugin_tui_template::run()?;
+        nu_plugin_tui_template::run().map_err(|err| match err.downcast_ref::<LabeledError>() {
+            Some(err) => err.clone(),
+            None => LabeledError::new("unexpected internal error").with_label(
+                "could not transform error into ShellError, there was another kind of crash...",
+                call.head,
+            ),
+        })?;
         foreground.leave()?;
 
         Ok(Value::nothing(Span::unknown()))
